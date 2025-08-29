@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS recipe_ingredient
     recipe_id uuid NOT NULL,
     ingredient_id uuid NOT NULL,
     amount integer,
-    unit character(255) COLLATE pg_catalog."default",
+    unit character(255),
 )

@@ -40,13 +40,9 @@ mod tests {
                 .configure(api::config),
         ).await;
 
-        // --- Test 1: Check the default /api/ endpoint ---
-
-        // Create and make the test request to /api/
+        // Test the /api/recipes endpoint
         let req1 = TestRequest::get().uri("/api/recipes").to_request();
-        let resp1 = test::call_service(&app, req1).await;
-
-        // Assert the response for the first endpoint
+        
         assert!(resp1.status().is_success());
         let body1 = test::read_body(resp1).await;
         assert_eq!(body1, "[]");

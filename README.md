@@ -40,4 +40,4 @@ Search for a recipe
 |  15  | Database design, local database creation for testing |   
 | 30 | adding parameters to actix, most time spend on debugging. Found that columns were set to charachters[] which is an array of textfields instead of a single texfield  
 | 30 | Created two endpoints for recipes
-   |85| Started on test environment, problems with connecting to testcontainer
+|85| Started on test environment, problems with connecting to testcontainer
