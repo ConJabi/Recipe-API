@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS ingredient
+(
+    id uuid NOT NULL,
+    name character(255) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT ingredients_pkey PRIMARY KEY (id)
+)

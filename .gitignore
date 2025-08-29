@@ -1,0 +1,5 @@
+# we dont want to commit sensitive information
+.env
+Cargo.lock
+target/
+.sqlx/
