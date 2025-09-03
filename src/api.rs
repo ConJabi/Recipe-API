@@ -1,5 +1,5 @@
-use actix_web::{web, Responder, HttpResponse, get};
-use sqlx::{PgPool, FromRow};
+use actix_web::{web, HttpResponse, get};
+use sqlx::{Pool, Postgres, FromRow};
 use serde::{Serialize, Deserialize};
 
 use uuid::Uuid;
@@ -13,10 +13,19 @@ struct RecipeOverview {
 }
 
 /// Represents a single ingredient within a recipe.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 struct Ingredient {
     name: String,
     amount: Option<i32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+struct RecipeRow {
+    id: Uuid,
+    name: String,
+    description: String,
+    meal_type: Option<String>,
+    time_required: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -31,11 +40,10 @@ struct RecipeDetails {
 
 
 #[get("/recipes")]
-async fn get_recipes_overview(pool: web::Data<PgPool>) -> Result<HttpResponse, actix_web::Error> {
-    let recipes = sqlx::query_as!(
-        RecipeOverview,
-        "SELECT id, name, meal_type, time_required FROM recipe ORDER BY name"
-    )
+async fn get_recipes_overview(pool: web::Data<Pool<Postgres>>) -> Result<HttpResponse, actix_web::Error> {
+let recipes = sqlx::query_as::<_, RecipeOverview>(
+    "SELECT id, name, meal_type, time_required FROM recipe ORDER BY name"
+)
     .fetch_all(pool.get_ref())
     .await
     .map_err(actix_web::error::ErrorInternalServerError)?;
@@ -45,17 +53,17 @@ async fn get_recipes_overview(pool: web::Data<PgPool>) -> Result<HttpResponse, a
 
 #[get("/recipes/{id}")]
 async fn get_recipe_details(
-    pool: web::Data<PgPool>,
+   pool: web::Data<Pool<Postgres>>,
     path: web::Path<Uuid>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let recipe_id = path.into_inner();
 
     // Fetch the main recipe details.
-    let recipe_row = sqlx::query!(
+  let recipe_row = sqlx::query_as::<_, RecipeRow>(
         "SELECT id, name, description, meal_type, time_required FROM recipe WHERE id = $1",
-        recipe_id
-    )
-    .fetch_one(pool.get_ref())
+    
+    ).bind(recipe_id).
+    fetch_one(pool.get_ref())
     .await
     .map_err(|e| {
         eprintln!("Error fetching recipe: {:?}", e);
@@ -63,12 +71,13 @@ async fn get_recipe_details(
     })?;
 
     // Fetch the ingredients for the recipe.
-    let ingredients = sqlx::query!(
-        "SELECT i.name, ri.amount FROM ingredient i
-         JOIN recipe_ingredient ri ON i.id = ri.ingredient_id
-         WHERE ri.recipe_id = $1",
-        recipe_id
-    )
+let ingredients = sqlx::query_as::<_, Ingredient>(
+    "SELECT i.name, ri.amount
+     FROM ingredient i
+     JOIN recipe_ingredient ri ON i.id = ri.ingredient_id
+     WHERE ri.recipe_id = $1"
+)
+.bind(recipe_id)
     .fetch_all(pool.get_ref())
     .await
     .map_err(actix_web::error::ErrorInternalServerError)?;

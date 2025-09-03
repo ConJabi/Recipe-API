@@ -1,5 +1,5 @@
 use actix_web::{HttpServer, App, web};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::{Pool, Postgres};
 use std::io::Result;
 use std::env;
 use dotenvy::dotenv; 
@@ -13,13 +13,8 @@ async fn main() -> Result<()> {
     let database_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set in your environment variables.");
 
-    
     // get a connection pool
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await
-        .expect("Failed to create SQLx pool.");
+    let pool: Pool<Postgres> = sqlx::PgPool::connect(&database_url).await.unwrap();
 
     println!("Server running at http://127.0.0.1:8080");
 
